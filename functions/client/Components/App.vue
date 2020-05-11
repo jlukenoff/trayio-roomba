@@ -11,17 +11,16 @@
     <button type="button" @click="traverseMatrix" class="submit-btn">
       Traverse Room
     </button>
-    <Board v-if="matrixProps.originalMatrix" v-bind="matrixProps" />
+    <Room v-if="matrixProps.originalMatrix" v-bind="matrixProps" />
   </div>
 </template>
 
 <script>
-import Board from "./Board.vue";
-import gql from "graphql-tag";
+import Room from "./Room.vue";
 export default {
   name: "App",
   components: {
-    Board,
+    Room,
   },
   mounted() {
     this.traverseMatrix();
@@ -67,11 +66,6 @@ export default {
     return {
       matrixProps: {},
       inputString: "5 5\\n1 2\\n1 0\\n2 2\\n2 3\\nNNESEESWNWW",
-      newMatrixArgs: {
-        width: 5,
-        height: 5,
-        dirtPercentage: 30,
-      },
     };
   },
 };

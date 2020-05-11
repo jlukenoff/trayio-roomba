@@ -24,9 +24,8 @@
 
 <script>
 import { gsap } from "gsap";
-import Vue from "vue";
 export default {
-  name: "Board",
+  name: "Room",
   props: {
     dirtCount: {
       type: [String, Number],
