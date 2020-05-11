@@ -3,23 +3,36 @@ import * as express from "express";
 import * as graphqlHTTP from "express-graphql";
 import { buildSchema } from "graphql";
 import * as admin from "firebase-admin";
-// import Roomba from "./Roomba";
-
-// const db = admin.firestore();
+import Roomba from "./Roomba";
 
 const app = express();
 
 admin.initializeApp();
 
 const schema = buildSchema(`
+  type RoombaResult {
+    resultString: String
+    traversalSteps: [[Int]]
+    dirtLocations: [String]
+    finalPositionRaw: [Int]
+    initialPositionRaw: [Int]
+    dirtCount: String
+    finalMatrix: String
+    originalMatrix: String
+    directions: String
+  }
+
   type Query {
-    traverseString(input: String): String
+    traversalResults(input: String): RoombaResult
   }
 `);
 
 const root = {
-  traverseString({ input }: { input: string }) {
-    return input;
+  traversalResults({ input }: { input: string }) {
+    const roomba = new Roomba();
+    roomba.ingestInput(input);
+
+    return roomba.traverse();
   },
 };
 

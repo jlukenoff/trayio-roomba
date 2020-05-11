@@ -2,40 +2,16 @@
   <div id="app">
     <div class="header"><h2>Roomba App</h2></div>
     <form>
-      <label for="inputUpload">Upload an input file (csv)</label>
+      <label for="inputUpload">Upload an input file</label>
       <input type="file" id="inputUpload" @change="setMatrix($event)" />
     </form>
-    or
-    <form>
-      <label for="new-matrix-width">New Board Width</label>
-      <input
-        type="number"
-        id="new-matrix-width"
-        v-model="newMatrixArgs.width"
-      />
-      <label for="new-matrix-height">New Board Height</label>
-      <input
-        type="number"
-        id="new-matrix-height"
-        v-model="newMatrixArgs.height"
-      />
-      <label for="new-matrix-width">New Board Dirt Percentage</label>
-      <div>
-        <input
-          type="number"
-          id="new-matrix-dirt-percentage"
-          v-model="newMatrixArgs.dirtPercentage"
-          max="100"
-        />%
-      </div>
-      <button type="button" @click="newBoard">
-        Get New Random Matrix
-      </button>
-    </form>
-    <button type="button" @click="getBoardTraversalDirections()">
-      Get Traversal Directions
+    <div class="subtitle">
+      or use default matrix.
+    </div>
+    <button type="button" @click="traverseMatrix" class="submit-btn">
+      Traverse Room
     </button>
-    <Board :matrix="matrix" />
+    <Board v-if="matrixProps.originalMatrix" v-bind="matrixProps" />
   </div>
 </template>
 
@@ -47,66 +23,50 @@ export default {
   components: {
     Board,
   },
+  mounted() {
+    this.traverseMatrix();
+  },
   methods: {
     async setMatrix(e) {
       e.preventDefault();
-      const inputString = await e.target.files[0].text();
-      console.log("inputString:", inputString);
-      this.matrix = parseMatrixString(inputString);
+      const text = await e.target.files[0].text();
+      console.log(text);
+      this.inputString = text.replace(/\n/g, "\\n");
     },
-
-    async newBoard(e) {
-      e.preventDefault();
-      const {
-        data: { newBoard } = { newBoard: "" },
-      } = await this.$apollo.query({
-        // Query
-        query: gql`
-          query($width: Int!, $height: Int!) {
-            newBoard(width: $width, height: $height)
+    async traverseMatrix() {
+      fetch("graphql", {
+        method: "POST",
+        body: JSON.stringify({
+          query: `{
+          traversalResults(input:"${this.inputString}") {
+            dirtCount
+            resultString
+            dirtLocations
+            finalPositionRaw
+            initialPositionRaw
+            finalMatrix
+            originalMatrix
+            traversalSteps
+            directions
           }
-        `,
-
-        fetchPolicy: "no-cache",
-        // Parameters
-        variables: {
-          width: +this.newMatrixArgs.width,
-          height: +this.newMatrixArgs.height,
-          dirtPercentage: +this.newMatrixArgs.dirtPercentage,
+        }`,
+        }),
+        headers: {
+          "Content-Type": "application/json",
         },
-        result({ data: { newBoard }, loading }) {
-          if (!loading) {
-            this.matrix = parseMatrixString(newBoard);
-          }
-        },
-      });
-
-      if (newBoard) {
-        this.matrix = parseMatrixString(newBoard);
-      }
-    },
-
-    async getBoardTraversalDirections() {
-      // TODO: connect to graphql and implement traversal logic
-      // Call to the graphql mutation
-      const result = await this.$apollo.mutate({
-        // Query
-        mutation: gql`
-          mutation($board: String!, $startingCoordinates: [Int]) {
-            board(board: $board)
-          }
-        `,
-        // Parameters
-        variables: {
-          label: this.newTag,
-        },
-      });
+      })
+        .then((c) => c.json())
+        .then(({ data: { traversalResults } }) => {
+          this.matrixProps = { ...traversalResults };
+        })
+        .catch(console.error);
     },
   },
 
   data: function() {
     return {
-      matrix: null,
+      matrixProps: {},
+      inputString: "5 5\\n1 2\\n1 0\\n2 2\\n2 3\\nNNESEESWNWW",
       newMatrixArgs: {
         width: 5,
         height: 5,
@@ -115,10 +75,6 @@ export default {
     };
   },
 };
-
-function parseMatrixString(str) {
-  return str.split("\n").map((r) => r.split(",").map((v) => +v));
-}
 </script>
 
 <style lang="scss" scoped>
@@ -128,6 +84,21 @@ function parseMatrixString(str) {
   display: flex;
   flex-flow: column;
   align-items: center;
+  text-align: center;
+  min-height: 300px;
+
+  button {
+    -webkit-appearance: none;
+    display: block;
+    background: none;
+    width: 15em;
+    padding: 1em 0;
+    border-radius: 2.5px;
+  }
+
+  .submit-btn {
+    margin-top: 10px;
+  }
 
   form {
     display: flex;
@@ -135,6 +106,10 @@ function parseMatrixString(str) {
     max-width: 400px;
     padding: 20px;
     margin: auto;
+  }
+
+  .subtitle {
+    text-align: center;
   }
 }
 </style>
