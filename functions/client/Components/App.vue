@@ -33,11 +33,10 @@ export default {
     async setMatrix(e) {
       e.preventDefault();
       const text = await e.target.files[0].text();
-      console.log(text);
       this.inputString = text.replace(/\n/g, "\\n");
     },
-    async traverseMatrix() {
-      fetch("graphql", {
+    traverseMatrix() {
+      return fetch("graphql", {
         method: "POST",
         body: JSON.stringify({
           query: `{
