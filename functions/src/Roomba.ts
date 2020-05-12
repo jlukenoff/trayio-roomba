@@ -1,6 +1,7 @@
 import * as path from "path";
 import { readFile } from "fs";
 
+// define type for Roomba traversal output
 type RoombaResult = {
   resultString: string;
   traversalSteps: number[][];
@@ -13,6 +14,19 @@ type RoombaResult = {
   directions: string;
 };
 
+/**
+ * Class Roomba
+ * - ingests input via string or flat file
+ * - creates a 2D array populated with input
+ * - traverses array and returns information on traversal
+ *
+ * Note: One performance optimization would be to minimize
+ * space complexity by not actually creating a 2D array. Instead,
+ * this could be achieved by running calculations from the current
+ * position, incrementing and decrementing as we do here. However,
+ * I have chosen to build the matrix here to make it easier to
+ * communicate this data to the GraphQL server and then the front end.
+ */
 export default class Roomba {
   inputString: string = "";
   matrix: number[][] = [[0]];
@@ -22,11 +36,12 @@ export default class Roomba {
 
   /**
    * @param pathToInputFile [string] - path to input file
-   * @returns Promise resolving to an input string or an error
+   * @returns Promise resolving to an input string
    */
   readFromFile(pathToInputFile: string): Promise<string | Error> {
     const targetFile = path.resolve(pathToInputFile);
 
+    // asynchronously read from file and resolve resulting data as string
     return new Promise((resolve, reject) =>
       readFile(targetFile, (e, d) => {
         if (e) reject(`Error importing file: ${e.message}`);
@@ -40,27 +55,34 @@ export default class Roomba {
    * @param inputString - input string of given matrix format
    */
   ingestInput(this: Roomba, inputString: string): void {
+    // split input string on newlines
     const [
       dimensions,
       initialCoordinates,
       ...remainingRows
     ] = inputString.split("\n");
 
+    // extract width and height from first row
     const [width, height] = dimensions.split(" ");
 
-    const [row, col] = initialCoordinates.split(" ");
+    // extract initial coordinates from second row
+    const [col, row] = initialCoordinates.split(" ");
 
-    this.currentPosition = [+row, +height - 1 - +col];
+    // update instance initial coordinates
+    this.currentPosition = [+col, +height - 1 - +row];
 
+    // set instance directions string: (e.g. NESWNESW)
     this.directions = <string>remainingRows.pop();
 
-    this.dirtLocations = remainingRows.map((l) => {
+    // set dirt locations list, inverting y
+    this.dirtLocations = remainingRows /* .map((l) => {
       const [x, y] = l.split(" ");
 
       // account for y inversion when mapping indeces
       return `${+x},${+height - +y - 1}`;
-    });
+    }) */;
 
+    // set rendered 2D array
     this.matrix = Roomba.prototype.renderMatrix(
       +width,
       +height,
@@ -68,45 +90,57 @@ export default class Roomba {
     );
   }
 
+  // render a 2D matrix of given width, height and dirtLocations
   private renderMatrix(
     width: number,
     height: number,
     dirtLocations: string[]
   ): number[][] {
+    // convert dirtLocations to Set for constant time lookups
     const locSet = new Set(dirtLocations);
 
+    // render 2D array
     return Array(height)
       .fill(null)
       .map((r, y) =>
+        // populate row
         Array(width)
           .fill(null)
           .map((v, x) => {
-            return locSet.has(`${x},${y}`) ? 1 : 0;
+            // check dirtLocations for current coordinates and fill with 1 or 0
+            return locSet.has(`${x} ${height - 1 - y}`) ? 1 : 0;
           })
       );
   }
 
+  // traverses current matrix and returns information on matrix
   traverse(this: Roomba): RoombaResult {
+    // get instance properties
     const { directions, matrix, currentPosition, dirtLocations } = this;
 
+    // set initial variables
     let [x, y] = currentPosition;
     const traversalSteps = [];
     let dirtCount = 0;
     const originalMatrix = [...matrix.map((r) => [...r])];
 
-    // iterate through directions
-    for (let i = 0; i < directions.length; i++) {
+    // traverse directions string, we go over the end of the string here so we can count the cell we land on last
+    for (let i = 0; i <= directions.length; i++) {
       traversalSteps.push([x, matrix.length - 1 - y]);
-      // check if we are on a 1 or 0
+
+      // check if we are on a 1 or 0 (dirt cell or not)
       if (matrix[y][x] === 1) {
         matrix[y][x] = 0;
         // increment counter
         dirtCount++;
       }
 
+      // get current character from directions string
       const nextDirection = directions.charAt(i);
 
       // move coordinates based on current direction step
+      // in each condition we also check that we are not
+      // exceeding the edge of the matrix
       if (nextDirection === "N" && y >= 1) {
         y--;
       } else if (nextDirection === "S" && y < matrix.length - 1) {
@@ -118,11 +152,9 @@ export default class Roomba {
       }
     }
 
-    traversalSteps.push([x, matrix.length - 1 - y]);
-
     // return last location
     return {
-      // transform y back into expected format (accounts for y inversion)
+      // invert y
       resultString: `${x} ${matrix.length - 1 - y}\n${dirtCount}`,
       finalPositionRaw: [x, y],
       initialPositionRaw: currentPosition,

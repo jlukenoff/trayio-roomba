@@ -1,9 +1,8 @@
 <template>
   <div class="container">
-    <div class="title" v-show="currentStep">Next Step: {{ currentStep }}</div>
     <div class="matrix-container">
       <img
-        src="https://storage.cloud.google.com/john-lukenoff-portoflio/static/roomba.png"
+        src="https://storage.googleapis.com/john-lukenoff-portoflio/static/roomba.png"
         alt="Roomba"
         class="roomba-img"
         ref="roombaImg"
@@ -18,12 +17,28 @@
           x: {{ cellIndex }} y: {{ matrix.length - 1 - rowIndex }}
         </li>
       </ul>
+      <div class="title" v-show="currentStep">
+        Next Step: {{ currentStep }}<br />
+        <ul class="results-list">
+          <li>
+            Final Coordinates (x, y):
+            {{
+              resultString
+                .split("\n")[0]
+                .split(" ")
+                .join(", ")
+            }}
+          </li>
+          <li>Dirt Collected: {{ resultString.split("\n")[1] }}</li>
+        </ul>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
 import { gsap } from "gsap";
+
 export default {
   name: "Room",
   props: {
@@ -47,9 +62,13 @@ export default {
     },
     originalMatrix: {
       type: String,
+      default: "[]",
     },
     traversalSteps: {
       type: Array,
+      default() {
+        return [];
+      },
     },
     directions: {
       type: String,
@@ -60,34 +79,38 @@ export default {
       return JSON.parse(this.originalMatrix);
     },
   },
+  watch: {
+    traversalSteps(newSteps) {
+      const $vm = this;
+      animateRoomba($vm, newSteps);
+    },
+  },
   data() {
+    const $vm = this;
     return {
       currentStep: "",
+      animationTimeline: gsap.timeline({
+        repeat: 2,
+        repeatDelay: 2,
+        defaults: {},
+        smoothChildTiming: true,
+        onRepeat: () => resetMatrix($vm),
+        onComplete: () => resetMatrix($vm),
+      }),
     };
   },
-  mounted() {
-    const vm = this;
-    animateRoomba(vm);
-  },
-  watch: {},
 };
 
-function animateRoomba($vm) {
+function animateRoomba($vm, traversalSteps) {
   const {
     $refs: { roombaImg },
     initialPositionRaw,
     matrix,
-    traversalSteps,
     directions,
+    animationTimeline,
   } = $vm;
 
-  const timeline = gsap.timeline({
-    repeat: 2,
-    repeatDelay: 2,
-    defaults: {},
-    smoothChildTiming: true,
-    onRepeat: () => resetMatrix($vm),
-  });
+  animationTimeline.clear();
 
   for (let i = 0; i < traversalSteps.length; i++) {
     const [x, y] = traversalSteps[i];
@@ -127,7 +150,7 @@ function animateRoomba($vm) {
 
     animateOptions.rotate = rotation;
 
-    timeline
+    animationTimeline
       .add()
       .to(roombaImg, animateOptions)
       .call(() => updateState($vm, x, matrix.length - 1 - y, currentStep));
@@ -158,6 +181,11 @@ $filledBg: #ccc;
 
 .title {
   text-align: center;
+  margin: auto;
+}
+
+.results-list {
+  list-style: none;
 }
 
 .matrix-container {

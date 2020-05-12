@@ -11,7 +11,11 @@
     <button type="button" @click="traverseMatrix" class="submit-btn">
       Traverse Room
     </button>
-    <Room v-if="matrixProps.originalMatrix" v-bind="matrixProps" />
+    <Room
+      v-show="matrixProps.resultString"
+      v-bind="matrixProps"
+      ref="roomRef"
+    />
   </div>
 </template>
 
@@ -56,15 +60,27 @@ export default {
       })
         .then((c) => c.json())
         .then(({ data: { traversalResults } }) => {
-          this.matrixProps = { ...traversalResults };
+          console.log("traversalResults:", traversalResults);
+          this.matrixProps = Object.assign({}, traversalResults);
+
+          // this.$refs.roomRef.$forceUpdate();
         })
         .catch(console.error);
     },
   },
-
-  data: function() {
+  data() {
     return {
-      matrixProps: {},
+      matrixProps: {
+        dirtCount: 0,
+        resultString: "",
+        dirtLocations: [],
+        finalPositionRaw: [0, 0],
+        initialPositionRaw: [0, 0],
+        finalMatrix: "[]",
+        originalMatrix: "[]",
+        traversalSteps: [],
+        directions: "",
+      },
       inputString: "5 5\\n1 2\\n1 0\\n2 2\\n2 3\\nNNESEESWNWW",
     };
   },
