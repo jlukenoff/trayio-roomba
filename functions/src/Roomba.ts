@@ -51,9 +51,7 @@ export default class Roomba {
     );
   }
 
-  /**
-   * @param inputString - input string of given matrix format
-   */
+  // ingest input string and update instance state with results
   ingestInput(this: Roomba, inputString: string): void {
     // split input string on newlines
     const [
@@ -75,12 +73,7 @@ export default class Roomba {
     this.directions = <string>remainingRows.pop();
 
     // set dirt locations list, inverting y
-    this.dirtLocations = remainingRows /* .map((l) => {
-      const [x, y] = l.split(" ");
-
-      // account for y inversion when mapping indeces
-      return `${+x},${+height - +y - 1}`;
-    }) */;
+    this.dirtLocations = remainingRows;
 
     // set rendered 2D array
     this.matrix = Roomba.prototype.renderMatrix(
