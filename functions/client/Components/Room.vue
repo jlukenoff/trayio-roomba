@@ -14,11 +14,12 @@
           class="matrix-cell"
           :class="{ filled: cell === 1 }"
         >
-          x: {{ cellIndex }} y: {{ matrix.length - 1 - rowIndex }}
+          <!-- x: {{ cellIndex }} y: {{ matrix.length - 1 - rowIndex }} -->
         </li>
       </ul>
-      <div class="title" v-show="currentStep">
-        Next Step: {{ currentStep }}<br />
+      <div class="title">
+        <span v-show="currentStep">Next Step: {{ currentStep }}</span
+        ><br />
         <ul class="results-list">
           <li>
             Final Coordinates (x, y):
@@ -75,13 +76,16 @@ export default {
     },
   },
   computed: {
+    // create matrix prop when original matrix changes
     matrix() {
       return JSON.parse(this.originalMatrix);
     },
   },
   watch: {
+    // watch for changes to travsersalSteps
     traversalSteps(newSteps) {
       const $vm = this;
+      // start roomba animation
       animateRoomba($vm, newSteps);
     },
   },
@@ -90,8 +94,9 @@ export default {
     return {
       currentStep: "",
       animationTimeline: gsap.timeline({
-        repeat: 2,
-        repeatDelay: 2,
+        // Uncomment to set repeat
+        // repeat: 2,
+        // repeatDelay: 2,
         defaults: {},
         smoothChildTiming: true,
         onRepeat: () => resetMatrix($vm),
@@ -115,6 +120,7 @@ function animateRoomba($vm, traversalSteps) {
   for (let i = 0; i < traversalSteps.length; i++) {
     const [x, y] = traversalSteps[i];
 
+    // initialize options for animation step
     const animateOptions = {
       duration: 1,
       ease: "none",
@@ -126,6 +132,7 @@ function animateRoomba($vm, traversalSteps) {
     let rotation = 0;
     let currentStep;
 
+    // calculate rotation based on directions string
     switch (directions[i]) {
       case "N":
         rotation = 0;
@@ -150,6 +157,7 @@ function animateRoomba($vm, traversalSteps) {
 
     animateOptions.rotate = rotation;
 
+    // add animation to timeline
     animationTimeline
       .add()
       .to(roombaImg, animateOptions)
@@ -157,6 +165,7 @@ function animateRoomba($vm, traversalSteps) {
   }
 }
 
+// update state with each animation
 function updateState($vm, x, y, step) {
   if ($vm.matrix[y][x] === 1) {
     const newRow = $vm.matrix[y];
@@ -168,6 +177,7 @@ function updateState($vm, x, y, step) {
   $vm.currentStep = step;
 }
 
+// reset matrix when done
 function resetMatrix($vm) {
   $vm.matrix.splice(0, $vm.matrix.length, ...JSON.parse($vm.originalMatrix));
   $vm.currentStep = "";

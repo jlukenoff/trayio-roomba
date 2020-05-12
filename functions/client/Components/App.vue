@@ -6,7 +6,7 @@
       <input type="file" id="inputUpload" @change="setMatrix($event)" />
     </form>
     <div class="subtitle">
-      or use default matrix.
+      or use default room.
     </div>
     <button type="button" @click="traverseMatrix" class="submit-btn">
       Traverse Room
