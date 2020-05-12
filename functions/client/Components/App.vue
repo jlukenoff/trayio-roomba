@@ -60,10 +60,12 @@ export default {
       })
         .then((c) => c.json())
         .then(({ data: { traversalResults } }) => {
-          console.log("traversalResults:", traversalResults);
+          console.log(
+            "Result:\n",
+            traversalResults.resultString,
+            "\n-----------"
+          );
           this.matrixProps = Object.assign({}, traversalResults);
-
-          // this.$refs.roomRef.$forceUpdate();
         })
         .catch(console.error);
     },
