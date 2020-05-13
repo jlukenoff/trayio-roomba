@@ -20,7 +20,7 @@
 </template>
 
 <script>
-import Room from "./Room.vue";
+import Room from "./Room";
 export default {
   name: "App",
   components: {
