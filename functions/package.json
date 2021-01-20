@@ -23,7 +23,7 @@
     "firebase-functions": "^3.6.0",
     "gql-tag": "^1.0.1",
     "graphql": "^15.0.0",
-    "gsap": "^3.2.6",
+    "gsap": "^3.6.0",
     "vue": "^2.6.11",
     "vue-apollo": "^3.0.3"
   },
